@@ -46,6 +46,243 @@ python self_test.py
 python mcp_server/server.py
 ```
 
+## 🌟 Integration with Your 3D Printing Ecosystem
+
+This toolchain is designed to integrate seamlessly with your existing 3D printing and design tools. You have a complete professional ecosystem:
+
+### Your Complete Stack
+
+| Tool | Purpose | Integration Point |
+|------|---------|-------------------|
+| **3MF Tools** (this repo) | Mesh processing & repair | Post-CAD, pre-slicing |
+| **CadQuery MCP** | Parametric CAD modeling | Design generation |
+| **FreeCAD MCP** | Sketch-based CAD & assemblies | Technical design |
+| **Blender MCP** | 3D rendering & organic modeling | Visualization & organic shapes |
+| **Bambu Lab MCP** | Printer control (P1S/P2S) | Print execution |
+| **Vision MCP** | Computer vision & inspection | Quality control |
+| **Code Executor MCP** | Tool orchestration | Workflow automation |
+
+### Recommended Workflows
+
+#### Workflow 1: Parametric Design → Print
+```bash
+# 1. Design in CadQuery (via MCP)
+# Generate parametric part → exports to STL
+
+# 2. Process with 3MF Tools
+source activate.sh
+./examples/repair_mesh.py design.stl design_repaired.stl
+
+# 3. Convert to 3MF
+python -c "import trimesh; trimesh.load('design_repaired.stl').export('design.3mf')"
+
+# 4. Send to Bambu Lab printer (via MCP)
+# Print directly to P1S/P2S
+```
+
+#### Workflow 2: Downloaded Models → Print
+```bash
+# 1. Download STL from Thingiverse/Printables
+
+# 2. Validate and repair
+./examples/batch_process.py validate downloads/
+./examples/batch_process.py repair downloads/ --parallel
+
+# 3. Inspect with Vision MCP (optional)
+# Computer vision quality check
+
+# 4. Print via Bambu Lab MCP
+```
+
+#### Workflow 3: Boolean Operations → Assembly
+```bash
+# 1. Design base parts in CadQuery/FreeCAD
+
+# 2. Combine with boolean operations
+./examples/boolean_ops.py base.stl insert.stl union combined.stl
+./examples/boolean_ops.py block.stl hole.stl difference part.stl
+
+# 3. Render preview in Blender (via MCP)
+
+# 4. Print final assembly
+```
+
+#### Workflow 4: Batch Processing Pipeline
+```bash
+# Process entire project directory
+source activate.sh
+
+# Repair all files in parallel
+./examples/batch_process.py repair models/ --parallel --workers 8
+
+# Validate repaired files
+./examples/batch_process.py validate repaired/
+
+# Convert to 3MF for slicing
+./examples/batch_process.py convert repaired/ 3mf --parallel
+
+# Files ready for Bambu Lab printer
+```
+
+#### Workflow 5: 3MF Manipulation
+```bash
+# Unpack 3MF to inspect/modify
+./examples/3mf_manipulation.py unpack model.3mf extracted/
+
+# Modify metadata
+./examples/3mf_manipulation.py modify extracted/ Title "Custom Part" Designer "Your Name"
+
+# Repack with changes
+./examples/3mf_manipulation.py repack extracted/ modified.3mf
+
+# Send to printer
+```
+
+### Integration Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Design Tools (MCP)                        │
+│  CadQuery (parametric) | FreeCAD (assemblies) | Blender     │
+└────────────────────┬────────────────────────────────────────┘
+                     │ STL/OBJ/PLY
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│              3MF Tools (THIS REPOSITORY)                     │
+│  • Mesh Repair (MeshFix)                                    │
+│  • Format Conversion                                         │
+│  • Boolean Operations                                        │
+│  • 3MF Manipulation                                          │
+│  • Batch Processing                                          │
+└────────────────────┬────────────────────────────────────────┘
+                     │ 3MF/STL
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│                  Slicing & Printing (MCP)                    │
+│  CuraEngine (local) | Bambu Lab (P1S/P2S) | OctoEverywhere │
+└────────────────────┬────────────────────────────────────────┘
+                     │ G-code
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Quality Control (Optional)                    │
+│  Vision MCP - Computer vision inspection & validation       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Your Configured Printers
+
+- **Bambu Lab P1S** - Primary printer
+- **Bambu Lab P2S** - Secondary printer
+- **OctoEverywhere** - Remote management
+
+### Your Filament Profiles
+
+Pre-configured profiles in your system:
+- eSUN PLA Lightweight (foaming)
+- eSUN PLA Lite (standard)
+- TPU Lightweight (flexible)
+- PLA Silk/Shiny
+- UV Rock PLA (UV-reactive)
+- eSUN PET (PETG)
+
+### MCP Server Integration
+
+All tools are exposed via MCP protocol for seamless AI assistant integration:
+
+```json
+{
+  "tool": "mesh.repair",
+  "arguments": {
+    "input_path": "model.stl",
+    "output_path": "fixed.stl"
+  }
+}
+```
+
+**Your MCP Configuration Location:**
+`/Users/marshalwalkerm4mini/3d-design-projects/mcp-config/mcpservers.json`
+
+### Environment Setup
+
+To use 3MF Tools with your other MCP servers:
+
+```bash
+# Navigate to 3MF Tools
+cd ~/3d-workflows/3mf_tools
+
+# Activate environment
+source activate.sh
+
+# Now all tools are available
+python self_test.py
+./examples/repair_mesh.py input.stl output.stl
+
+# Start MCP server for AI integration
+python mcp_server/server.py
+```
+
+### Cross-Tool Workflows
+
+#### CAD-MASTER System Integration
+Your CAD-MASTER system (`~/3d-design-projects/`) organizes files as:
+
+```
+3d-design-projects/
+├── cad/           → Design here (CadQuery/FreeCAD)
+├── stl/           → Export here
+├── step/          → Engineering exports
+├── slices/        → After processing with 3MF Tools
+└── renders/       → Blender outputs
+```
+
+**Recommended workflow:**
+1. Design in `cad/` using CadQuery/FreeCAD MCP
+2. Export STL to `stl/`
+3. Process with 3MF Tools (repair, convert)
+4. Move processed files to `slices/`
+5. Print via Bambu Lab MCP
+
+#### Example: Complete Pipeline Script
+
+```bash
+#!/bin/bash
+# complete-workflow.sh
+
+# 1. Design phase (via CadQuery MCP)
+# Generates: ~/3d-design-projects/cad/part_v1.py
+# Exports: ~/3d-design-projects/stl/part_v1.stl
+
+# 2. Process with 3MF Tools
+cd ~/3d-workflows/3mf_tools
+source activate.sh
+
+INPUT="$HOME/3d-design-projects/stl/part_v1.stl"
+OUTPUT="$HOME/3d-design-projects/slices/part_v1.3mf"
+
+# Repair
+./examples/repair_mesh.py "$INPUT" temp_repaired.stl
+
+# Convert to 3MF
+python -c "import trimesh; trimesh.load('temp_repaired.stl').export('$OUTPUT')"
+
+# Clean up
+rm temp_repaired.stl
+
+echo "✓ Ready to print: $OUTPUT"
+
+# 3. Print via Bambu Lab MCP
+# Send $OUTPUT to printer via MCP tools
+```
+
+### Documentation for Related Tools
+
+- **CadQuery MCP**: `~/3d-design-projects/cadquery-mcp-server/README.md`
+- **FreeCAD MCP**: `~/3d-design-projects/freecad-mcp-server/README.md`
+- **CAD-MASTER System**: `~/3d-design-projects/README.md`
+- **Printer MCP**: `~/Library/Mobile Documents/com~apple~CloudDocs/3d-projects/mcp/printer-mcp/`
+
+---
+
 ## 📦 What's Installed
 
 ### Core Tools
