@@ -363,8 +363,8 @@ if __name__ == "__main__":
         import gradio as gr
 
     # Launch app
+    # Note: Gradio 6.x automatically handles port selection
     app.launch(
-        server_name="127.0.0.1",  # Local only for security
-        server_port=7860,
-        share=False  # Set to True to get public URL
+        share=False,  # Set to True to get public URL
+        inbrowser=True  # Open browser automatically
     )
