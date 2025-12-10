@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Build artifacts
+bin/meshfix
+bin/curaengine
+*/build/
+*.o
+*.a
+*.dylib
+*.so
+
+# Test files
+test_*.stl
+test_*.3mf
+test_*.off
+test_*_repaired.*
+test_*_fixed.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Downloaded/cloned sources (keep structure, not content)
+meshfix_source/
+lib3mf/
+3MFresh/
+CuraEngine/
+
+# Logs
+*.log
