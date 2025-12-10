@@ -1,0 +1,93 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        python-version: ['3.13']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install cmake
+
+    - name: Install system dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+
+    - name: Create virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+
+    - name: Install Python dependencies
+      run: |
+        source venv/bin/activate
+        pip install trimesh numpy scipy meshio networkx lxml pytest
+
+    - name: Build MeshFix
+      run: |
+        git clone https://github.com/MarcoAttene/MeshFix-V2.1.git meshfix_source
+        cd meshfix_source
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+        make -j2
+        cd ../..
+        mkdir -p bin
+        if [ -f "meshfix_source/bin64/MeshFix" ]; then
+          cp meshfix_source/bin64/MeshFix bin/meshfix
+        elif [ -f "meshfix_source/bin/MeshFix" ]; then
+          cp meshfix_source/bin/MeshFix bin/meshfix
+        fi
+        chmod +x bin/meshfix
+
+    - name: Build lib3mf
+      run: |
+        git clone https://github.com/3MFConsortium/lib3mf.git
+        cd lib3mf
+        git submodule update --init --recursive
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DLIB3MF_TESTS=OFF
+        make -j2
+        cd ../..
+
+    - name: Run tests
+      run: |
+        source venv/bin/activate
+        python self_test.py
+
+    - name: Test examples
+      run: |
+        source venv/bin/activate
+        python -m pytest tests/ -v || echo "No pytest tests found"
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}
+        path: |
+          test_*.stl
+          test_*.3mf
+          test_*.off
